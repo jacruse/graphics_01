@@ -9,91 +9,104 @@ struct pixel {
   int g;
 };
 
-void clear_pixel( struct pixel point ) {
-  point.r = 0;
-  point.b = 0;
-  point.g = 0;
+void clear_pixel( struct pixel * point ) {
+  point->r = 0;
+  point->b = 0;
+  point->g = 0;
 }
 
-void setup( struct pixel image[27][27] ) {
-  int i = 0;
-  int j = 0;
-  for (; i < 27; i++) {
-    for (; j < 27; j++) {
-      clear_pixel(image[i][j]);
+void setup( struct pixel image[729][729] ) {
+  int i, j;
+  for (i = 0; i < 729; i++) {
+    for (j = 0; j < 729; j++) {
+      clear_pixel(&image[i][j]);
     }
   }
 }
 
-void set_purple( struct pixel point ) {
-  point.r = 256;
-  point.b = 256;
-  point.g = 0;
+void set_purple( struct pixel * point ) {
+  point->r = 255;
+  point->b = 255;
+  point->g = 0;
 }
 
-void set_cyan( struct pixel point ) {
-  point.r = 0;
-  point.b = 256;
-  point.g = 256;
+void set_cyan( struct pixel * point ) {
+  point->r = 0;
+  point->b = 255;
+  point->g = 255;
 }
 
-void set_white( struct pixel point ) {
-  point.r = 256;
-  point.b = 256;
-  point.g = 256;
+void set_white( struct pixel * point ) {
+  point->r = 255;
+  point->b = 255;
+  point->g = 255;
 }  
 
-void draw_fractal( struct pixel image[27][27], int ac_len, int sub_len ) {
+void draw_fractal( struct pixel image[729][729], int ac_len, int sub_len ) {
   if (sub_len <= 1) {
-    set_white( image[13][13] );
+    set_white( &image[364][364] );
   }
   else {
     int offset = (ac_len - sub_len) / 2;
-    int i = 0;
-    int j = 0;
+    int i = offset;
+    int j = offset;
 
     //printf("made it here sub_len: %d\n", sub_len);
-    for ( ; i < sub_len; i++) {
+    for ( ; i < sub_len + offset; i++) {
       //printf("made it here");
-      set_cyan( image[offset][offset + i] );
-      if (i == (sub_len / 2) + 1) {
-	offset += 1;
+      set_cyan( &image[j][i] );
+      printf("sublen: %d (%d, %d) cyan l1\n", sub_len, j, i);
+      if ( i - offset == ((sub_len) / 2) - 1 ) {
+	i += 1;
+	j += 1;
 	sub_len -= 2;
-	if (sub_len == 1) {
-	  set_purple( image[13][13] );
+	if (sub_len <= 1) {
+	  set_purple( &image[364][364] );
+	  printf("sublen: %d (%d, %d): purple main case\n", sub_len, j, i);
 	  return;
 	}
-	for ( ; i < sub_len; i++ ) {
-	  set_purple( image[j + offset][i + offset] );
+	for ( ; i < sub_len + offset; i++ ) {
+	  set_purple( &image[j][i] );
+	  printf("sublen: %d (%d, %d): purple l1\n", sub_len, j, i);
 	  j += 1;
 	}
-	for ( ; j < sub_len; j++ ) {
-	  set_purple( image[offset + j][i + offset] );
+	for ( ; j < sub_len + offset; j++ ) {
+	  set_purple( &image[j][i] );
+	  printf("sublen: %d (%d, %d): purple l2\n", sub_len, j, i);
 	  i -= 1;
 	}
-	for ( ; i >= 0; i-- ) {
-	  set_purple( image[offset + j][offset + i] );
+	for ( ; i > offset + 1; i-- ) {
+	  set_purple( &image[j][i] );
+	  printf("sublen: %d (%d, %d): purple l3\n", sub_len, j, i);
 	  j -= 1;
 	}
-	for ( ; j >= 0; j-- ) {
-	  set_purple( image[offset + j][offset + i] );
+	for ( ; j > offset + 1; j-- ) {
+	  set_purple( &image[j][i] );
+	  printf("sublen: %d (%d, %d): purple l4\n", sub_len, j, i);
 	  i += 1;
 	}
 	sub_len += 2;
-	offset -= 1;
+	i -= 1;
+	j -= 1;
       }
     }
+    i--;
     
-    for ( ; j < sub_len; j++ ) {
-      set_cyan( image[offset + j][offset + i] );
+    for ( ; j < sub_len + offset; j++ ) {
+      set_cyan( &image[j][i] );
+      printf("sublen: %d (%d, %d) cyan l2\n", sub_len, j, i);
     }
+    j--;
 
-    for ( ; i >= 0; i-- ) {
-      set_cyan( image[offset + j][offset + i] );
+    for ( ; i >= offset; i-- ) {
+      set_cyan( &image[j][i] );
+      printf("sublen: %d (%d, %d) cyan l3\n", sub_len, j, i);
     }
+    i++;
 
-    for ( ; j >= 0; j-- ) {
-      set_cyan( image[offset + j][offset + i] );
+    for ( ; j >= offset; j-- ) {
+      set_cyan( &image[j][i] );
+      printf("sublen: %d (%d, %d) cyan l4\n", sub_len, j, i);
     }
 
     draw_fractal(image, ac_len, (sub_len - 5) / 2);
@@ -102,16 +115,39 @@ void draw_fractal( struct pixel image[27][27], int ac_len, int sub_len ) {
 
 int main() {
   FILE * fp;
-  struct pixel image[27][27];
+  struct pixel image[729][729];
+  int h, k;
 
-  draw_fractal( image, 27, 27 );
+  /*
+  printf("image[0][0] init val: %d %d %d \n", image[0][0].r, image[0][0].g, image[0][0].b);
 
+  clear_pixel(&image[0][0]);
+  
+  printf("image[0][0] cleared val: %d %d %d \n", image[0][0].r, image[0][0].g, image[0][0].b);  
+  */
+  
+  setup(image);
+
+  draw_fractal( image, 729, 729 );
+
+  fp = fopen("./image.ppm", "w");
+
+  fputs("P3 \n729 729 \n255 \n", fp);
+
+  fclose(fp);
   
   fp = fopen("./image.ppm", "a");
 
-  for (int i = 0; i < 27; i++) {
-    for (int j = 0; j < 27; j++) {
-      fprintf(fp, "%d %d %d \n", image[i][j].r, image[i][j].g, image[i][j].b);
+  printf("preloop\n");
+
+  for (h = 0; h < 729; h++) {
+    for (k = 0; k < 729; k++) {
+      //printf("image point (%d, %d): %d %d %d \n", h, k, image[k][h].r, image[k][h].g, image[k][h].b);
+      fprintf(fp, "%d %d %d \n", image[k][h].r, image[k][h].g, image[k][h].b);
     }
   }
+  
+  printf("made it here\n");
+  fclose(fp);
+  printf("done\n");
 }
